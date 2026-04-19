@@ -1,0 +1,253 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222 20% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 20% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 20% 12%;
+    --primary: 222 20% 12%;
+    --primary-foreground: 0 0% 100%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 220 14% 96%;
+    --accent-foreground: 222 20% 12%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 222 84% 55%;
+    --radius: 0.75rem;
+
+    --canvas-bg: 220 20% 98%;
+    --canvas-dot: 220 13% 82%;
+  }
+
+  .dark {
+    --background: 220 18% 6%;
+    --foreground: 210 20% 98%;
+    --card: 220 15% 10%;
+    --card-foreground: 210 20% 98%;
+    --popover: 220 15% 10%;
+    --popover-foreground: 210 20% 98%;
+    --primary: 210 20% 98%;
+    --primary-foreground: 222 20% 12%;
+    --muted: 220 15% 14%;
+    --muted-foreground: 220 10% 65%;
+    --accent: 220 15% 14%;
+    --accent-foreground: 210 20% 98%;
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 12% 18%;
+    --input: 220 12% 18%;
+    --ring: 210 100% 70%;
+
+    --canvas-bg: 220 20% 5%;
+    --canvas-dot: 220 12% 22%;
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    -webkit-font-smoothing: antialiased;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+}
+
+/* React Flow canvas tweaks */
+.react-flow {
+  background: hsl(var(--canvas-bg));
+}
+.react-flow__handle {
+  width: 9px;
+  height: 9px;
+  background: hsl(var(--muted-foreground));
+  border: 2px solid hsl(var(--background));
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.react-flow__node:hover .react-flow__handle,
+.react-flow__node.selected .react-flow__handle,
+.react-flow__node:focus .react-flow__handle {
+  opacity: 1;
+}
+.react-flow__edge-path {
+  stroke: hsl(var(--muted-foreground));
+  stroke-width: 1.5;
+}
+.react-flow__edge.selected .react-flow__edge-path,
+.react-flow__edge:focus .react-flow__edge-path {
+  stroke: hsl(var(--ring));
+}
+.react-flow__attribution {
+  display: none !important;
+}
+.react-flow__controls {
+  box-shadow: none;
+  border-radius: calc(var(--radius) - 2px);
+  overflow: hidden;
+  border: 1px solid hsl(var(--border));
+}
+.react-flow__controls-button {
+  background: hsl(var(--card));
+  color: hsl(var(--foreground));
+  border-bottom: 1px solid hsl(var(--border));
+  width: 28px;
+  height: 28px;
+}
+.react-flow__controls-button svg {
+  fill: currentColor;
+}
+.react-flow__controls-button:hover {
+  background: hsl(var(--accent));
+}
+.react-flow__minimap {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: calc(var(--radius) - 2px);
+}
+.react-flow__minimap-mask {
+  fill: hsl(var(--background) / 0.6);
+}
+.react-flow__minimap-node {
+  fill: hsl(var(--muted-foreground));
+}
+
+/* ── Turbo mode ─────────────────────────────────────────── */
+.turbo .react-flow {
+  background:
+    radial-gradient(1200px 600px at 50% 0%, color-mix(in srgb, var(--turbo-start, #ec4899) 10%, transparent), transparent 60%),
+    radial-gradient(900px 500px at 100% 100%, color-mix(in srgb, var(--turbo-end, #3b82f6) 10%, transparent), transparent 60%),
+    hsl(var(--canvas-bg));
+}
+.react-flow__edge.turbo-on .react-flow__edge-path,
+.turbo .react-flow__connection-path {
+  stroke: url(#turbo-edge);
+  stroke-width: 2;
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--turbo-start, #ec4899) 45%, transparent));
+}
+@property --turbo-angle {
+  syntax: '<angle>';
+  inherits: true;
+  initial-value: 0deg;
+}
+.react-flow__node.turbo-on .infra-card,
+.react-flow__node.turbo-on .shape-card,
+.react-flow__node.turbo-on .step-card,
+.react-flow__node.turbo-on .text-card,
+.react-flow__node.turbo-on .code-card {
+  position: relative;
+}
+.react-flow__node.turbo-on .infra-card::before,
+.react-flow__node.turbo-on .shape-card::before,
+.react-flow__node.turbo-on .step-card::before,
+.react-flow__node.turbo-on .text-card::before,
+.react-flow__node.turbo-on .code-card::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  padding: 3px;
+  background: conic-gradient(
+    from var(--turbo-angle),
+    var(--turbo-start, #ec4899),
+    var(--turbo-end, #3b82f6),
+    var(--turbo-start, #ec4899)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+  animation: turbo-border 3s linear infinite;
+}
+
+.react-flow__node.turbo-on .tunnel-portal-left {
+  border-right-color: var(--turbo-start, #ec4899) !important;
+}
+.react-flow__node.turbo-on .tunnel-portal-right {
+  border-left-color: var(--turbo-end, #3b82f6) !important;
+}
+/* Larger hit area on NodeResizer edge lines so any side drag-resizes */
+.react-flow__resize-control.line.top,
+.react-flow__resize-control.line.bottom {
+  height: 8px;
+}
+.react-flow__resize-control.line.left,
+.react-flow__resize-control.line.right {
+  width: 8px;
+}
+
+/* Tunnel: draw turbo ring inside body (overflow-hidden would clip outside) */
+.react-flow__node.turbo-on .tunnel-body {
+  position: relative;
+  border-color: transparent !important;
+}
+.react-flow__node.turbo-on .tunnel-body::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 3px;
+  background: conic-gradient(
+    from var(--turbo-angle),
+    var(--turbo-start, #ec4899),
+    var(--turbo-end, #3b82f6),
+    var(--turbo-start, #ec4899)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+  animation: turbo-border 3s linear infinite;
+  z-index: 2;
+}
+@keyframes turbo-border {
+  from { --turbo-angle: 0deg; }
+  to   { --turbo-angle: 360deg; }
+}
+
+/* Animated edges: flow source → target */
+@property --dash-offset {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 12;
+}
+.react-flow__edge.animated .react-flow__edge-path {
+  stroke-dasharray: 6 6;
+  animation: dashdraw var(--dash-duration, 0.8s) linear infinite;
+}
+@keyframes dashdraw {
+  from { stroke-dashoffset: var(--dash-offset); }
+  to   { stroke-dashoffset: 0; }
+}
+
+/* Preview mode: hide hover/edit UI on blocks and edges */
+.preview-mode .react-flow__handle {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+.preview-mode .react-flow__edge .react-flow__edgelabel-renderer button {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+.preview-mode .infra-card button,
+.preview-mode [data-hover-only] {
+  display: none !important;
+}
+.preview-mode .react-flow__node:hover,
+.preview-mode .react-flow__edge:hover {
+  cursor: default !important;
+}
+
