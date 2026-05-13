@@ -276,6 +276,9 @@ const nextNodeId = () =>
   `n${Date.now().toString(36)}${(nodeSeq++).toString(36)}`;
 const nextGroupId = () =>
   `g${Date.now().toString(36)}${(nodeSeq++).toString(36)}`;
+let edgeSeq = 0;
+const nextEdgeId = () =>
+  `e${Date.now().toString(36)}${(edgeSeq++).toString(36)}`;
 const nextBlockId = () => `custom-${Math.random().toString(36).slice(2, 10)}`;
 
 const infraSize = (variant: InfraVariant) =>
@@ -531,23 +534,38 @@ export const useFlowStore = create<FlowState>()(
       const idSet = new Set(ids);
       const toClone = s.nodes.filter((n) => idSet.has(n.id));
       if (toClone.length === 0) return s;
-      const clones = toClone.map(
-        (n) =>
-          ({
-            ...n,
-            id: nextNodeId(),
-            position: {
-              x: n.position.x + offset.x,
-              y: n.position.y + offset.y,
-            },
-            selected: true,
-            data: { ...n.data },
-          }) as AppNode
-      );
+      const idMap = new Map<string, string>();
+      const clones = toClone.map((n) => {
+        const newId = nextNodeId();
+        idMap.set(n.id, newId);
+        return {
+          ...n,
+          id: newId,
+          position: {
+            x: n.position.x + offset.x,
+            y: n.position.y + offset.y,
+          },
+          selected: true,
+          data: { ...n.data },
+        } as AppNode;
+      });
+      const edgeClones = s.edges
+        .filter((e) => idSet.has(e.source) && idSet.has(e.target))
+        .map((e) => ({
+          ...e,
+          id: nextEdgeId(),
+          source: idMap.get(e.source)!,
+          target: idMap.get(e.target)!,
+          selected: false,
+          data: e.data ? { ...e.data } : undefined,
+        }));
       const deselected = s.nodes.map((n) =>
         n.selected ? { ...n, selected: false } : n
       );
-      return { nodes: [...deselected, ...clones] };
+      return {
+        nodes: [...deselected, ...clones],
+        edges: [...s.edges, ...edgeClones],
+      };
     }),
 
   updateNodeData: (id, patch) =>
