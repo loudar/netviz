@@ -28,6 +28,7 @@ type WithColors = {
   subtitleColor?: string;
   borderColor?: string;
   borderRadius?: number;
+  borderWidth?: number;
   turbo?: boolean;
 };
 

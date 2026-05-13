@@ -659,6 +659,12 @@ function InfraEditor({ node }: { node: InfraNode }) {
         fallback={12}
         onChange={(v) => updateNodeData(node.id, { borderRadius: v })}
       />
+      <WidthSlider
+        id={`${node.id}-bw`}
+        value={node.data.borderWidth}
+        fallback={1}
+        onChange={(v) => updateNodeData(node.id, { borderWidth: v })}
+      />
       <LayerControls id={node.id} />
       <ColorsSection
         targets={[
@@ -689,6 +695,37 @@ function RadiusSlider({
   return (
     <div className="grid gap-1.5">
       <Label htmlFor={id}>Border radius ({current}px)</Label>
+      <input
+        id={id}
+        type="range"
+        min={0}
+        max={max}
+        step={1}
+        value={current}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="w-full accent-primary"
+      />
+    </div>
+  );
+}
+
+function WidthSlider({
+  id,
+  value,
+  fallback,
+  max = 8,
+  onChange,
+}: {
+  id: string;
+  value: number | undefined;
+  fallback: number;
+  max?: number;
+  onChange: (v: number) => void;
+}) {
+  const current = value ?? fallback;
+  return (
+    <div className="grid gap-1.5">
+      <Label htmlFor={id}>Border width ({current}px)</Label>
       <input
         id={id}
         type="range"

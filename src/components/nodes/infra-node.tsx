@@ -99,6 +99,9 @@ function InfraNodeComponent({ data, selected }: NodeProps<InfraNode>) {
         ...(typeof data.borderRadius === "number"
           ? { borderRadius: data.borderRadius }
           : {}),
+        ...(typeof data.borderWidth === "number"
+          ? { borderWidth: data.borderWidth }
+          : {}),
       }}
     >
       <NodeResizer
