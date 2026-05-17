@@ -48,6 +48,7 @@ export function Toolbar() {
   const animateEdges = useFlowStore((s) => s.animateEdges);
   const animationSpeed = useFlowStore((s) => s.animationSpeed);
   const turboColors = useFlowStore((s) => s.turboColors);
+  const setRenderAll = useFlowStore((s) => s.setRenderAllElements);
   const replace = useFlowStore((s) => s.replace);
   const clear = useFlowStore((s) => s.clear);
   const resetWorkspace = useFlowStore((s) => s.resetWorkspace);
@@ -181,6 +182,11 @@ export function Toolbar() {
     if (!viewport || nodes.length === 0) return;
     const bounds = customBounds ?? getNodesBounds(nodes);
     if (bounds.width === 0 || bounds.height === 0) return;
+
+    // Force React Flow to mount all nodes/edges (disables virtualization temporarily)
+    setRenderAll(true);
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+
     const padding = 80;
     const width = Math.round(bounds.width + padding * 2);
     const height = Math.round(bounds.height + padding * 2);
@@ -355,6 +361,7 @@ export function Toolbar() {
         if (style === null) el.removeAttribute("style");
         else el.setAttribute("style", style);
       });
+      setRenderAll(false);
     }
   };
 

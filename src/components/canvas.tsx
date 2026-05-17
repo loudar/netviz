@@ -246,6 +246,7 @@ function CanvasInner() {
   const showControls = useFlowStore((s) => s.showControls);
   const showGrid = useFlowStore((s) => s.showGrid);
   const showSmartGuides = useFlowStore((s) => s.showSmartGuides);
+  const renderAll = useFlowStore((s) => s.renderAllElements);
   const selectedSingle = useFlowStore((s) => {
     const sel = s.nodes.filter((n) => n.selected);
     return sel.length === 1 ? sel[0] : null;
@@ -517,7 +518,7 @@ function CanvasInner() {
         panOnDrag={[1]}
         panOnScroll
         selectionMode={SelectionMode.Partial}
-        onlyRenderVisibleElements
+        onlyRenderVisibleElements={!renderAll}
         elevateNodesOnSelect={false}
         fitView
         fitViewOptions={{ padding: 0.4 }}

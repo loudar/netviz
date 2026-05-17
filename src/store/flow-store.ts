@@ -183,6 +183,8 @@ type Snapshot = {
   showGrid: boolean;
   showSmartGuides: boolean;
   workMode: WorkMode;
+  renderAllElements: boolean;
+  setRenderAllElements: (v: boolean) => void;
 };
 
 export type WorkMode = "design" | "preview";
@@ -1064,6 +1066,8 @@ export const useFlowStore = create<FlowState>()(
   toggleGrid: () => set((s) => ({ showGrid: !s.showGrid })),
   toggleSmartGuides: () =>
     set((s) => ({ showSmartGuides: !s.showSmartGuides })),
+  renderAllElements: false,
+  setRenderAllElements: (v) => set({ renderAllElements: v }),
   setWorkMode: (mode) => set({ workMode: mode }),
     }),
     {
