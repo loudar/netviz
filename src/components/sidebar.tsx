@@ -12,7 +12,7 @@ import {
   TrainFrontTunnel,
   Type,
 } from "lucide-react";
-import { useFlowStore, type EdgeLineStyle, type ShapeKind } from "@/store/flow-store";
+import { useFlowStore, type EdgeArrows, type EdgeLineStyle, type ShapeKind } from "@/store/flow-store";
 import {
   ACCENT_CLASSES,
   COLOR_PRESETS,
@@ -283,6 +283,15 @@ function OptionsPanel() {
   const setEdgeColor = useFlowStore((s) => s.setEdgeColor);
   const setEdgeLineStyle = useFlowStore((s) => s.setEdgeLineStyle);
   const setEdgeDashGap = useFlowStore((s) => s.setEdgeDashGap);
+  const setEdgeArrows = useFlowStore((s) => s.setEdgeArrows);
+  const edgeArrows = useFlowStore((s) => {
+    const sel = s.edges.filter((e) => e.selected);
+    if (sel.length === 0) return s.edgeArrows;
+    const first = sel[0].data?.arrows ?? s.edgeArrows;
+    return sel.every((e) => (e.data?.arrows ?? s.edgeArrows) === first)
+      ? first
+      : undefined;
+  });
   const setEdgeLabelColor = useFlowStore((s) => s.setEdgeLabelColor);
   const labelTextColor = useFlowStore((s) => {
     const sel = s.edges.filter((e) => e.selected);
@@ -472,6 +481,37 @@ function OptionsPanel() {
             </span>
           </div>
         )}
+        <div
+          className={cn(
+            "px-1 pt-2",
+            turboActive && "pointer-events-none opacity-40"
+          )}
+          title={turboActive ? "Turbo overrides arrows" : undefined}
+        >
+          <p className="pb-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+            Arrows{turboActive ? " (overridden by turbo)" : ""}
+          </p>
+          <div className="flex gap-1">
+            {(["none", "start", "end", "both"] as EdgeArrows[]).map((k) => {
+              const active = edgeArrows === k;
+              return (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => setEdgeArrows(k)}
+                  className={cn(
+                    "flex-1 rounded-md border border-border px-2 py-1.5 text-[11px] capitalize transition-colors",
+                    active
+                      ? "bg-accent text-accent-foreground ring-1 ring-ring"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {k === "none" ? "None" : k === "start" ? "Start" : k === "end" ? "End" : "Both"}
+                </button>
+              );
+            })}
+          </div>
+        </div>
         <div className="px-1 pt-2">
           <p className="pb-1 text-[10px] uppercase tracking-wider text-muted-foreground">
             Label

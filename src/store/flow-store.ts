@@ -145,6 +145,7 @@ export type Group = {
 };
 
 export type EdgeLineStyle = "solid" | "dashed" | "dotted";
+export type EdgeArrows = "none" | "start" | "end" | "both";
 export type LabeledEdgeData = {
   label?: string;
   turbo?: boolean;
@@ -154,6 +155,7 @@ export type LabeledEdgeData = {
   labelTextColor?: string;
   labelBgColor?: string;
   labelBorderColor?: string;
+  arrows?: EdgeArrows;
 };
 export type LabeledEdge = Edge<LabeledEdgeData, "labeled">;
 
@@ -178,6 +180,7 @@ type Snapshot = {
   edgeColor?: string;
   edgeLineStyle: EdgeLineStyle;
   edgeDashGap: number;
+  edgeArrows: EdgeArrows;
   showMinimap: boolean;
   showControls: boolean;
   showGrid: boolean;
@@ -242,6 +245,7 @@ type FlowState = Snapshot & {
   ) => void;
   setEdgeLineStyle: (style: EdgeLineStyle) => void;
   setEdgeDashGap: (gap: number) => void;
+  setEdgeArrows: (arrows: EdgeArrows) => void;
   bringToFront: (id: string) => void;
   sendToBack: (id: string) => void;
   bringForward: (id: string) => void;
@@ -344,6 +348,7 @@ export const useFlowStore = create<FlowState>()(
   turboColors: DEFAULT_TURBO_COLORS,
   edgeLineStyle: "solid" as EdgeLineStyle,
   edgeDashGap: 6,
+  edgeArrows: "end",
   showMinimap: true,
   showControls: true,
   showGrid: true,
@@ -357,24 +362,31 @@ export const useFlowStore = create<FlowState>()(
     set((s) => ({ edges: applyEdgeChanges(changes, s.edges) })),
 
   onConnect: (conn) =>
-    set((s) => ({
-      edges: addEdge(
-        {
-          ...conn,
-          type: "labeled",
-          data: {
-            label: "",
-            turbo: s.turbo,
-            color: s.edgeColor,
-            lineStyle: s.edgeLineStyle,
-            dashGap: s.edgeDashGap,
+    set((s) => {
+      const marker = (show: boolean) =>
+        show && !s.turbo ? DEFAULT_MARKER : undefined;
+      const arrows = s.edgeArrows;
+      return {
+        edges: addEdge(
+          {
+            ...conn,
+            type: "labeled",
+            data: {
+              label: "",
+              turbo: s.turbo,
+              color: s.edgeColor,
+              lineStyle: s.edgeLineStyle,
+              dashGap: s.edgeDashGap,
+              arrows: s.edgeArrows,
+            },
+            animated: s.animateEdges,
+            markerStart: marker(arrows === "start" || arrows === "both"),
+            markerEnd: marker(arrows === "end" || arrows === "both"),
           },
-          animated: s.animateEdges,
-          markerEnd: s.turbo ? undefined : DEFAULT_MARKER,
-        },
-        s.edges
-      ) as LabeledEdge[],
-    })),
+          s.edges
+        ) as LabeledEdge[],
+      };
+    }),
 
   addInfraNode: (block, position) => {
     const id = nextNodeId();
@@ -694,6 +706,15 @@ export const useFlowStore = create<FlowState>()(
 
   toggleTurbo: () =>
     set((s) => {
+      const edgeMarkers = (e: LabeledEdge, turboOn: boolean) => {
+        if (turboOn) return { markerStart: undefined, markerEnd: undefined };
+        const a = e.data?.arrows ?? s.edgeArrows;
+        return {
+          markerStart: a === "start" || a === "both" ? DEFAULT_MARKER : undefined,
+          markerEnd: a === "end" || a === "both" ? DEFAULT_MARKER : undefined,
+        };
+      };
+
       const selectedEdges = s.edges.filter((e) => e.selected);
       const selectedNodes = s.nodes.filter((n) => n.selected);
       if (selectedEdges.length + selectedNodes.length > 0) {
@@ -707,7 +728,7 @@ export const useFlowStore = create<FlowState>()(
               ? {
                   ...e,
                   data: { ...(e.data ?? {}), turbo: nextFlag },
-                  markerEnd: nextFlag ? undefined : DEFAULT_MARKER,
+                  ...edgeMarkers(e, nextFlag),
                 }
               : e
           ),
@@ -727,7 +748,7 @@ export const useFlowStore = create<FlowState>()(
         edges: s.edges.map((e) => ({
           ...e,
           data: { ...(e.data ?? {}), turbo: next },
-          markerEnd: next ? undefined : DEFAULT_MARKER,
+          ...edgeMarkers(e, next),
         })),
         nodes: s.nodes.map((n) =>
           ({ ...n, data: { ...n.data, turbo: next } } as AppNode)
@@ -860,6 +881,36 @@ export const useFlowStore = create<FlowState>()(
         edges: s.edges.map((e) => ({
           ...e,
           data: { ...(e.data ?? {}), dashGap: gap },
+        })),
+      };
+    }),
+
+  setEdgeArrows: (arrows) =>
+    set((s) => {
+      const edgeMarkers = (e: LabeledEdge) => {
+        const isTurbo = e.data?.turbo ?? s.turbo;
+        if (isTurbo) return { markerStart: undefined, markerEnd: undefined };
+        return {
+          markerStart: arrows === "start" || arrows === "both" ? DEFAULT_MARKER : undefined,
+          markerEnd: arrows === "end" || arrows === "both" ? DEFAULT_MARKER : undefined,
+        };
+      };
+      const selected = s.edges.filter((e) => e.selected);
+      if (selected.length > 0) {
+        return {
+          edges: s.edges.map((e) =>
+            e.selected
+              ? { ...e, ...edgeMarkers(e), data: { ...(e.data ?? {}), arrows } }
+              : e
+          ),
+        };
+      }
+      return {
+        edgeArrows: arrows,
+        edges: s.edges.map((e) => ({
+          ...e,
+          ...edgeMarkers(e),
+          data: { ...(e.data ?? {}), arrows },
         })),
       };
     }),
@@ -1117,6 +1168,7 @@ export const useFlowStore = create<FlowState>()(
         edgeColor: s.edgeColor,
         edgeLineStyle: s.edgeLineStyle,
         edgeDashGap: s.edgeDashGap,
+        edgeArrows: s.edgeArrows,
         showMinimap: s.showMinimap,
         showControls: s.showControls,
         showGrid: s.showGrid,

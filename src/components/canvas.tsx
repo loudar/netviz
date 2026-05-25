@@ -25,7 +25,6 @@ import {
 import { resolveIcon } from "@/blocks/icons";
 import "@xyflow/react/dist/style.css";
 import {
-  DEFAULT_MARKER,
   useFlowStore,
   type AppNode,
   type ShapeKind,
@@ -396,9 +395,9 @@ function CanvasInner() {
     () => ({
       type: "labeled",
       animated: animateEdges,
-      markerEnd: turbo ? undefined : DEFAULT_MARKER,
+      interactionWidth: 20,
     }),
-    [animateEdges, turbo]
+    [animateEdges]
   );
 
   const [connectPopover, setConnectPopover] = useState<{
@@ -417,9 +416,44 @@ function CanvasInner() {
     ) => {
       if (connectionState.isValid) return;
       if (!connectionState.fromNode) return;
+
       const e = event as MouseEvent;
       const clientX = "clientX" in e ? e.clientX : 0;
       const clientY = "clientY" in e ? e.clientY : 0;
+
+      const targetNode = connectionState.toNode ?? (() => {
+        const el = document.elementFromPoint(clientX, clientY);
+        const nodeEl = el?.closest(".react-flow__node");
+        if (!nodeEl) return null;
+        const tid = nodeEl.getAttribute("data-id");
+        if (!tid || tid === connectionState.fromNode.id) return null;
+        return useFlowStore.getState().nodes.find((n) => n.id === tid) ?? null;
+      })();
+
+      if (targetNode && !connectionState.toHandle) {
+        const sourceNode = connectionState.fromNode;
+        const sw = sourceNode.measured?.width ?? sourceNode.width ?? 0;
+        const sh = sourceNode.measured?.height ?? sourceNode.height ?? 0;
+        const tw = targetNode.measured?.width ?? targetNode.width ?? 0;
+        const th = targetNode.measured?.height ?? targetNode.height ?? 0;
+        const scx = sourceNode.position.x + sw / 2;
+        const scy = sourceNode.position.y + sh / 2;
+        const tcx = targetNode.position.x + tw / 2;
+        const tcy = targetNode.position.y + th / 2;
+        const dx = scx - tcx;
+        const dy = scy - tcy;
+        const targetHandle = Math.abs(dx) > Math.abs(dy)
+          ? (dx > 0 ? "right" : "left")
+          : (dy > 0 ? "bottom" : "top");
+        useFlowStore.getState().onConnect({
+          source: sourceNode.id,
+          target: targetNode.id,
+          sourceHandle: connectionState.fromHandle?.id ?? null,
+          targetHandle,
+        });
+        return;
+      }
+
       const flowPos = screenToFlowPosition({ x: clientX, y: clientY });
       setConnectPopover({
         screenX: clientX,

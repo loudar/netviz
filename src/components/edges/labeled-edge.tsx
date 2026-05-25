@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   BaseEdge,
   EdgeLabelRenderer,
@@ -18,6 +18,8 @@ export function LabeledEdge({
   targetPosition,
   selected,
   data,
+  markerStart,
+  markerEnd,
 }: EdgeProps<LabeledEdgeType>) {
   const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX,
@@ -33,6 +35,17 @@ export function LabeledEdge({
   const label = data?.label ?? "";
   const [draft, setDraft] = useState(label);
   const ref = useRef<HTMLInputElement>(null);
+
+  const selectEdge = useCallback(() => {
+    const store = useFlowStore.getState();
+    store.onEdgesChange([
+      ...store.edges.filter((e) => e.selected).map((e) => ({ type: "select" as const, id: e.id, selected: false })),
+      { type: "select", id, selected: true },
+    ]);
+    store.onNodesChange(
+      store.nodes.filter((n) => n.selected).map((n) => ({ type: "select" as const, id: n.id, selected: false }))
+    );
+  }, [id]);
 
   useEffect(() => {
     setDraft(label);
@@ -73,7 +86,7 @@ export function LabeledEdge({
 
   return (
     <>
-      <BaseEdge id={id} path={edgePath} style={edgeStyle} />
+      <BaseEdge id={id} path={edgePath} style={edgeStyle} markerStart={markerStart} markerEnd={markerEnd} />
       <EdgeLabelRenderer>
         <div
           style={{
@@ -101,6 +114,7 @@ export function LabeledEdge({
           ) : (
             <button
               type="button"
+              onClick={selectEdge}
               onDoubleClick={() => setEditing(true)}
               style={{
                 ...(data?.labelTextColor ? { color: data.labelTextColor } : {}),
