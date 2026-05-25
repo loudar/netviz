@@ -74,6 +74,9 @@ export function Inspector() {
       return { id: n.id, type: n.type, data: n.data };
     })
   );
+  const selectedIds = useFlowStore(
+    useShallow((s) => s.nodes.filter((n) => n.selected).map((n) => n.id))
+  );
   if (!selectedProjection) return null;
   const selectedNode = selectedProjection as unknown as AppNode;
 
@@ -85,7 +88,7 @@ export function Inspector() {
         </p>
       </div>
       <div className="flex-1 space-y-5 overflow-y-auto p-4">
-        <NodeEditor node={selectedNode} />
+        <NodeEditor node={selectedNode} selectedIds={selectedIds} />
       </div>
     </aside>
   );
@@ -117,15 +120,15 @@ function LayerControls({ id }: { id: string }) {
   );
 }
 
-function NodeEditor({ node }: { node: AppNode }) {
-  if (node.type === "infra") return <InfraEditor node={node as InfraNode} />;
-  if (node.type === "shape") return <ShapeEditor node={node as ShapeNode} />;
-  if (node.type === "step") return <StepEditor node={node as StepNode} />;
-  if (node.type === "tunnel") return <TunnelEditor node={node as TunnelNode} />;
-  if (node.type === "line") return <LineEditor node={node as LineNode} />;
-  if (node.type === "image") return <ImageEditor node={node as ImageNode} />;
-  if (node.type === "code") return <CodeEditor node={node as CodeNode} />;
-  return <TextEditor node={node as TextNode} />;
+function NodeEditor({ node, selectedIds }: { node: AppNode; selectedIds: string[] }) {
+  if (node.type === "infra") return <InfraEditor node={node as InfraNode} selectedIds={selectedIds} />;
+  if (node.type === "shape") return <ShapeEditor node={node as ShapeNode} selectedIds={selectedIds} />;
+  if (node.type === "step") return <StepEditor node={node as StepNode} selectedIds={selectedIds} />;
+  if (node.type === "tunnel") return <TunnelEditor node={node as TunnelNode} selectedIds={selectedIds} />;
+  if (node.type === "line") return <LineEditor node={node as LineNode} selectedIds={selectedIds} />;
+  if (node.type === "image") return <ImageEditor node={node as ImageNode} selectedIds={selectedIds} />;
+  if (node.type === "code") return <CodeEditor node={node as CodeNode} selectedIds={selectedIds} />;
+  return <TextEditor node={node as TextNode} selectedIds={selectedIds} />;
 }
 
 const CODE_LANGUAGES: CodeLanguage[] = [
@@ -145,8 +148,9 @@ const CODE_LANGUAGES: CodeLanguage[] = [
   "markdown",
 ];
 
-function CodeEditor({ node }: { node: CodeNode }) {
+function CodeEditor({ node, selectedIds }: { node: CodeNode; selectedIds: string[] }) {
   const updateNodeData = useFlowStore((s) => s.updateNodeData);
+  const updateNodesData = useFlowStore((s) => s.updateNodesData);
   return (
     <>
       <div className="grid gap-1.5">
@@ -191,7 +195,7 @@ function CodeEditor({ node }: { node: CodeNode }) {
         id={`${node.id}-radius`}
         value={node.data.borderRadius}
         fallback={8}
-        onChange={(v) => updateNodeData(node.id, { borderRadius: v })}
+        onChange={(v) => updateNodesData(selectedIds, { borderRadius: v })}
       />
       <LayerControls id={node.id} />
       <ColorsSection
@@ -200,19 +204,19 @@ function CodeEditor({ node }: { node: CodeNode }) {
             key: "bg",
             label: "Background",
             value: node.data.bgColor,
-            onChange: (v) => updateNodeData(node.id, { bgColor: v }),
+            onChange: (v) => updateNodesData(selectedIds, { bgColor: v }),
           },
           {
             key: "title",
             label: "Title",
             value: node.data.titleColor,
-            onChange: (v) => updateNodeData(node.id, { titleColor: v }),
+            onChange: (v) => updateNodesData(selectedIds, { titleColor: v }),
           },
           {
             key: "border",
             label: "Border",
             value: node.data.borderColor,
-            onChange: (v) => updateNodeData(node.id, { borderColor: v }),
+            onChange: (v) => updateNodesData(selectedIds, { borderColor: v }),
           },
         ]}
       />
@@ -220,8 +224,9 @@ function CodeEditor({ node }: { node: CodeNode }) {
   );
 }
 
-function ImageEditor({ node }: { node: ImageNode }) {
+function ImageEditor({ node, selectedIds }: { node: ImageNode; selectedIds: string[] }) {
   const updateNodeData = useFlowStore((s) => s.updateNodeData);
+  const updateNodesData = useFlowStore((s) => s.updateNodesData);
   return (
     <>
       <div className="grid gap-1.5">
@@ -237,13 +242,13 @@ function ImageEditor({ node }: { node: ImageNode }) {
         id={`${node.id}-radius`}
         value={node.data.borderRadius}
         fallback={6}
-        onChange={(v) => updateNodeData(node.id, { borderRadius: v })}
+        onChange={(v) => updateNodesData(selectedIds, { borderRadius: v })}
       />
       <LayerControls id={node.id} />
       <ColorsSection
         targets={[
-          { key: "bg", label: "Background", value: node.data.bgColor, onChange: (v) => updateNodeData(node.id, { bgColor: v }) },
-          { key: "border", label: "Border", value: node.data.borderColor, onChange: (v) => updateNodeData(node.id, { borderColor: v }) },
+          { key: "bg", label: "Background", value: node.data.bgColor, onChange: (v) => updateNodesData(selectedIds, { bgColor: v }) },
+          { key: "border", label: "Border", value: node.data.borderColor, onChange: (v) => updateNodesData(selectedIds, { borderColor: v }) },
         ]}
       />
     </>
@@ -608,9 +613,10 @@ function TextAlignPicker({
   );
 }
 
-function InfraEditor({ node }: { node: InfraNode }) {
+function InfraEditor({ node, selectedIds }: { node: InfraNode; selectedIds: string[] }) {
   const customBlocks = useFlowStore((s) => s.customBlocks);
   const updateNodeData = useFlowStore((s) => s.updateNodeData);
+  const updateNodesData = useFlowStore((s) => s.updateNodesData);
   const block = resolveBlock(node.data.blockId, customBlocks);
   const iconName = node.data.iconName ?? block?.iconName ?? "box";
   const accent = node.data.accent ?? block?.accent ?? "slate";
@@ -652,26 +658,26 @@ function InfraEditor({ node }: { node: InfraNode }) {
         value={textAlign}
         onChange={(v) => updateNodeData(node.id, { textAlign: v })}
       />
-      <AccentPicker value={accent} onChange={(a) => updateNodeData(node.id, { accent: a })} />
+      <AccentPicker value={accent} onChange={(a) => updateNodesData(selectedIds, { accent: a })} />
       <RadiusSlider
         id={`${node.id}-radius`}
         value={node.data.borderRadius}
         fallback={12}
-        onChange={(v) => updateNodeData(node.id, { borderRadius: v })}
+        onChange={(v) => updateNodesData(selectedIds, { borderRadius: v })}
       />
       <WidthSlider
         id={`${node.id}-bw`}
         value={node.data.borderWidth}
         fallback={1}
-        onChange={(v) => updateNodeData(node.id, { borderWidth: v })}
+        onChange={(v) => updateNodesData(selectedIds, { borderWidth: v })}
       />
       <LayerControls id={node.id} />
       <ColorsSection
         targets={[
-          { key: "bg", label: "Background", value: node.data.bgColor, onChange: (v) => updateNodeData(node.id, { bgColor: v }) },
-          { key: "title", label: "Title", value: node.data.titleColor, onChange: (v) => updateNodeData(node.id, { titleColor: v }) },
-          { key: "desc", label: "Description", value: node.data.subtitleColor, onChange: (v) => updateNodeData(node.id, { subtitleColor: v }) },
-          { key: "border", label: "Border", value: node.data.borderColor, onChange: (v) => updateNodeData(node.id, { borderColor: v }) },
+          { key: "bg", label: "Background", value: node.data.bgColor, onChange: (v) => updateNodesData(selectedIds, { bgColor: v }) },
+          { key: "title", label: "Title", value: node.data.titleColor, onChange: (v) => updateNodesData(selectedIds, { titleColor: v }) },
+          { key: "desc", label: "Description", value: node.data.subtitleColor, onChange: (v) => updateNodesData(selectedIds, { subtitleColor: v }) },
+          { key: "border", label: "Border", value: node.data.borderColor, onChange: (v) => updateNodesData(selectedIds, { borderColor: v }) },
         ]}
       />
     </>
@@ -797,8 +803,9 @@ function BorderStylePicker({
   );
 }
 
-function ShapeEditor({ node }: { node: ShapeNode }) {
+function ShapeEditor({ node, selectedIds }: { node: ShapeNode; selectedIds: string[] }) {
   const updateNodeData = useFlowStore((s) => s.updateNodeData);
+  const updateNodesData = useFlowStore((s) => s.updateNodesData);
   const isRectangle = node.data.shape === "rectangle";
   return (
     <>
@@ -814,32 +821,33 @@ function ShapeEditor({ node }: { node: ShapeNode }) {
       {isRectangle && (
         <BorderStylePicker
           value={node.data.borderStyle ?? "dashed"}
-          onChange={(v) => updateNodeData(node.id, { borderStyle: v })}
+          onChange={(v) => updateNodesData(selectedIds, { borderStyle: v })}
         />
       )}
-      <AccentPicker value={node.data.accent ?? "slate"} onChange={(a) => updateNodeData(node.id, { accent: a })} />
+      <AccentPicker value={node.data.accent ?? "slate"} onChange={(a) => updateNodesData(selectedIds, { accent: a })} />
       {isRectangle && (
         <RadiusSlider
           id={`${node.id}-radius`}
           value={node.data.borderRadius}
           fallback={12}
-          onChange={(v) => updateNodeData(node.id, { borderRadius: v })}
+          onChange={(v) => updateNodesData(selectedIds, { borderRadius: v })}
         />
       )}
       <LayerControls id={node.id} />
       <ColorsSection
         targets={[
-          { key: "bg", label: "Background", value: node.data.bgColor, onChange: (v) => updateNodeData(node.id, { bgColor: v }) },
-          { key: "label", label: "Label", value: node.data.titleColor, onChange: (v) => updateNodeData(node.id, { titleColor: v }) },
-          { key: "border", label: "Border", value: node.data.borderColor, onChange: (v) => updateNodeData(node.id, { borderColor: v }) },
+          { key: "bg", label: "Background", value: node.data.bgColor, onChange: (v) => updateNodesData(selectedIds, { bgColor: v }) },
+          { key: "label", label: "Label", value: node.data.titleColor, onChange: (v) => updateNodesData(selectedIds, { titleColor: v }) },
+          { key: "border", label: "Border", value: node.data.borderColor, onChange: (v) => updateNodesData(selectedIds, { borderColor: v }) },
         ]}
       />
     </>
   );
 }
 
-function StepEditor({ node }: { node: StepNode }) {
+function StepEditor({ node, selectedIds }: { node: StepNode; selectedIds: string[] }) {
   const updateNodeData = useFlowStore((s) => s.updateNodeData);
+  const updateNodesData = useFlowStore((s) => s.updateNodesData);
   return (
     <>
       <div className="grid gap-1.5">
@@ -853,21 +861,22 @@ function StepEditor({ node }: { node: StepNode }) {
           }
         />
       </div>
-      <AccentPicker value={node.data.accent ?? "indigo"} onChange={(a) => updateNodeData(node.id, { accent: a })} />
+      <AccentPicker value={node.data.accent ?? "indigo"} onChange={(a) => updateNodesData(selectedIds, { accent: a })} />
       <LayerControls id={node.id} />
       <ColorsSection
         targets={[
-          { key: "bg", label: "Background", value: node.data.bgColor, onChange: (v) => updateNodeData(node.id, { bgColor: v }) },
-          { key: "number", label: "Number", value: node.data.titleColor, onChange: (v) => updateNodeData(node.id, { titleColor: v }) },
-          { key: "border", label: "Border", value: node.data.borderColor, onChange: (v) => updateNodeData(node.id, { borderColor: v }) },
+          { key: "bg", label: "Background", value: node.data.bgColor, onChange: (v) => updateNodesData(selectedIds, { bgColor: v }) },
+          { key: "number", label: "Number", value: node.data.titleColor, onChange: (v) => updateNodesData(selectedIds, { titleColor: v }) },
+          { key: "border", label: "Border", value: node.data.borderColor, onChange: (v) => updateNodesData(selectedIds, { borderColor: v }) },
         ]}
       />
     </>
   );
 }
 
-function TunnelEditor({ node }: { node: TunnelNode }) {
+function TunnelEditor({ node, selectedIds }: { node: TunnelNode; selectedIds: string[] }) {
   const updateNodeData = useFlowStore((s) => s.updateNodeData);
+  const updateNodesData = useFlowStore((s) => s.updateNodesData);
   return (
     <>
       <div className="grid gap-1.5">
@@ -879,21 +888,22 @@ function TunnelEditor({ node }: { node: TunnelNode }) {
           placeholder="Tunnel"
         />
       </div>
-      <AccentPicker value={node.data.accent ?? "sky"} onChange={(a) => updateNodeData(node.id, { accent: a })} />
+      <AccentPicker value={node.data.accent ?? "sky"} onChange={(a) => updateNodesData(selectedIds, { accent: a })} />
       <LayerControls id={node.id} />
       <ColorsSection
         targets={[
-          { key: "bg", label: "Background", value: node.data.bgColor, onChange: (v) => updateNodeData(node.id, { bgColor: v }) },
-          { key: "label", label: "Label", value: node.data.titleColor, onChange: (v) => updateNodeData(node.id, { titleColor: v }) },
-          { key: "border", label: "Border", value: node.data.borderColor, onChange: (v) => updateNodeData(node.id, { borderColor: v }) },
+          { key: "bg", label: "Background", value: node.data.bgColor, onChange: (v) => updateNodesData(selectedIds, { bgColor: v }) },
+          { key: "label", label: "Label", value: node.data.titleColor, onChange: (v) => updateNodesData(selectedIds, { titleColor: v }) },
+          { key: "border", label: "Border", value: node.data.borderColor, onChange: (v) => updateNodesData(selectedIds, { borderColor: v }) },
         ]}
       />
     </>
   );
 }
 
-function TextEditor({ node }: { node: TextNode }) {
+function TextEditor({ node, selectedIds }: { node: TextNode; selectedIds: string[] }) {
   const updateNodeData = useFlowStore((s) => s.updateNodeData);
+  const updateNodesData = useFlowStore((s) => s.updateNodesData);
   return (
     <>
       <div className="grid gap-1.5">
@@ -923,13 +933,13 @@ function TextEditor({ node }: { node: TextNode }) {
           className="w-full accent-primary"
         />
       </div>
-      <AccentPicker value={node.data.accent ?? "slate"} onChange={(a) => updateNodeData(node.id, { accent: a })} label="Color" />
+      <AccentPicker value={node.data.accent ?? "slate"} onChange={(a) => updateNodesData(selectedIds, { accent: a })} label="Color" />
       <div className="flex items-center justify-between">
         <Label>Background</Label>
         <button
           type="button"
           onClick={() =>
-            updateNodeData(node.id, {
+            updateNodesData(selectedIds, {
               bgColor: node.data.bgColor === "transparent" ? undefined : "transparent",
             })
           }
@@ -947,13 +957,13 @@ function TextEditor({ node }: { node: TextNode }) {
         id={`${node.id}-radius`}
         value={node.data.borderRadius}
         fallback={6}
-        onChange={(v) => updateNodeData(node.id, { borderRadius: v })}
+        onChange={(v) => updateNodesData(selectedIds, { borderRadius: v })}
       />
       <LayerControls id={node.id} />
       <ColorsSection
         targets={[
-          { key: "bg", label: "Background", value: node.data.bgColor, onChange: (v) => updateNodeData(node.id, { bgColor: v }) },
-          { key: "text", label: "Text", value: node.data.titleColor, onChange: (v) => updateNodeData(node.id, { titleColor: v }) },
+          { key: "bg", label: "Background", value: node.data.bgColor, onChange: (v) => updateNodesData(selectedIds, { bgColor: v }) },
+          { key: "text", label: "Text", value: node.data.titleColor, onChange: (v) => updateNodesData(selectedIds, { titleColor: v }) },
         ]}
       />
     </>
@@ -1036,8 +1046,9 @@ const LINE_STROKE_PRESETS: { id: string; hex: string | null; label: string }[] =
   { id: "pink", hex: "#ec4899", label: "Pink" },
 ];
 
-function LineEditor({ node }: { node: LineNode }) {
+function LineEditor({ node, selectedIds }: { node: LineNode; selectedIds: string[] }) {
   const updateNodeData = useFlowStore((s) => s.updateNodeData);
+  const updateNodesData = useFlowStore((s) => s.updateNodesData);
   const direction = node.data.direction ?? "l-r";
   const curvature = node.data.curvature ?? 0;
   const rotation = node.data.rotation ?? 0;
@@ -1206,7 +1217,7 @@ function LineEditor({ node }: { node: LineNode }) {
         presets={LINE_STROKE_PRESETS}
         value={strokeColor}
         onChange={(v) =>
-          updateNodeData(node.id, { strokeColor: v ?? "#94a3b8" })
+          updateNodesData(selectedIds, { strokeColor: v ?? "#94a3b8" })
         }
       />
     </>

@@ -215,6 +215,7 @@ type FlowState = Snapshot & {
     size: { width: number; height: number }
   ) => void;
   updateNodeData: (id: string, patch: NodeDataPatch) => void;
+  updateNodesData: (ids: string[], patch: NodeDataPatch) => void;
   duplicateNodes: (
     ids: string[],
     offset?: { x: number; y: number }
@@ -575,6 +576,15 @@ export const useFlowStore = create<FlowState>()(
     set((s) => ({
       nodes: s.nodes.map((n) =>
         n.id === id
+          ? ({ ...n, data: { ...n.data, ...patch } } as AppNode)
+          : n
+      ),
+    })),
+
+  updateNodesData: (ids, patch) =>
+    set((s) => ({
+      nodes: s.nodes.map((n) =>
+        ids.includes(n.id)
           ? ({ ...n, data: { ...n.data, ...patch } } as AppNode)
           : n
       ),

@@ -41,12 +41,6 @@ const WORK_MODES: { id: WorkMode; label: string }[] = [
 
 export function Toolbar() {
   const nodes = useFlowStore((s) => s.nodes);
-  const edges = useFlowStore((s) => s.edges);
-  const customBlocks = useFlowStore((s) => s.customBlocks);
-  const groups = useFlowStore((s) => s.groups);
-  const turbo = useFlowStore((s) => s.turbo);
-  const animateEdges = useFlowStore((s) => s.animateEdges);
-  const animationSpeed = useFlowStore((s) => s.animationSpeed);
   const turboColors = useFlowStore((s) => s.turboColors);
   const setRenderAll = useFlowStore((s) => s.setRenderAllElements);
   const replace = useFlowStore((s) => s.replace);
@@ -72,6 +66,8 @@ export function Toolbar() {
   const [cropMode, setCropMode] = useState<{
     format: "png" | "svg";
   } | null>(null);
+  const [confirmSaveOpen, setConfirmSaveOpen] = useState(false);
+  const [saveName, setSaveName] = useState("");
 
   const canUndo = useStore(useFlowStore.temporal, (s) => s.pastStates.length > 0);
   const canRedo = useStore(
@@ -370,19 +366,23 @@ export function Toolbar() {
       .toISOString()
       .slice(0, 19)
       .replace(/[:T]/g, "-")}`;
-    const name = window.prompt("Save as:", suggested);
-    if (name === null) return;
+    setSaveName(suggested);
+    setConfirmSaveOpen(true);
+  };
+
+  const doSave = (name: string) => {
+    const state = useFlowStore.getState();
     downloadSnapshot(
       {
         version: 1,
-        nodes,
-        edges,
-        customBlocks,
-        groups,
-        turbo,
-        animateEdges,
-        animationSpeed,
-        turboColors,
+        nodes: state.nodes,
+        edges: state.edges,
+        customBlocks: state.customBlocks,
+        groups: state.groups,
+        turbo: state.turbo,
+        animateEdges: state.animateEdges,
+        animationSpeed: state.animationSpeed,
+        turboColors: state.turboColors,
       },
       name
     );
@@ -699,6 +699,46 @@ export function Toolbar() {
               }}
             >
               Export
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={confirmSaveOpen} onOpenChange={setConfirmSaveOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save File</DialogTitle>
+            <DialogDescription>Choose a file name.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-1.5 py-1">
+            <Label htmlFor="save-filename">File name</Label>
+            <div className="flex items-center gap-1">
+              <Input
+                id="save-filename"
+                autoFocus
+                value={saveName}
+                onChange={(e) => setSaveName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    setConfirmSaveOpen(false);
+                    doSave(saveName);
+                  }
+                }}
+              />
+              <span className="shrink-0 text-sm text-muted-foreground">.json</span>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmSaveOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                setConfirmSaveOpen(false);
+                doSave(saveName);
+              }}
+            >
+              Save
             </Button>
           </DialogFooter>
         </DialogContent>
