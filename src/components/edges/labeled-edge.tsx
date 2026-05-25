@@ -45,6 +45,7 @@ export function LabeledEdge({
     store.onNodesChange(
       store.nodes.filter((n) => n.selected).map((n) => ({ type: "select" as const, id: n.id, selected: false }))
     );
+    store.setInspectEdge(id);
   }, [id]);
 
   useEffect(() => {

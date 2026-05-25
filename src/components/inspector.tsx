@@ -80,9 +80,16 @@ export function Inspector() {
   const selectedIds = useFlowStore(
     useShallow((s) => s.nodes.filter((n) => n.selected).map((n) => n.id))
   );
-  const selectedEdge = useFlowStore((s) => s.edges.find((e) => e.selected));
+  const inspectEdgeId = useFlowStore((s) => s.inspectEdgeId);
+  const inspectEdge = useFlowStore(
+    useShallow((s) => {
+      if (!s.inspectEdgeId) return null;
+      const e = s.edges.find((ed) => ed.id === s.inspectEdgeId);
+      return e ?? null;
+    })
+  );
 
-  if (!selectedProjection && !selectedEdge) return null;
+  if (!selectedProjection && !inspectEdge) return null;
 
   return (
     <aside className="flex h-full w-72 shrink-0 flex-col border-l border-border bg-card/40">
@@ -95,7 +102,7 @@ export function Inspector() {
         {selectedProjection ? (
           <NodeEditor node={selectedProjection as unknown as AppNode} selectedIds={selectedIds} />
         ) : (
-          <EdgeEditor edge={selectedEdge!} />
+          <EdgeEditor edge={inspectEdge} />
         )}
       </div>
     </aside>

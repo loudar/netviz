@@ -229,6 +229,21 @@ function CanvasInner() {
   const onNodesChange = useFlowStore((s) => s.onNodesChange);
   const onEdgesChange = useFlowStore((s) => s.onEdgesChange);
   const onConnect = useFlowStore((s) => s.onConnect);
+  const onEdgeClick = useCallback(
+    (_: React.MouseEvent, edge: LabeledEdge) => {
+      useFlowStore.getState().setInspectEdge(edge.id);
+      useFlowStore.getState().onNodesChange(
+        useFlowStore.getState().nodes.filter((n) => n.selected).map((n) => ({ type: "select", id: n.id, selected: false }))
+      );
+    },
+    []
+  );
+  const onNodeClick = useCallback(
+    () => {
+      useFlowStore.getState().setInspectEdge(null);
+    },
+    []
+  );
   const addInfraNode = useFlowStore((s) => s.addInfraNode);
   const addShapeNode = useFlowStore((s) => s.addShapeNode);
   const addTextNode = useFlowStore((s) => s.addTextNode);
@@ -543,6 +558,9 @@ function CanvasInner() {
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onConnectEnd={onConnectEnd}
+        onEdgeClick={onEdgeClick}
+        onNodeClick={onNodeClick}
+        onPaneClick={() => useFlowStore.getState().setInspectEdge(null)}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         connectionMode={ConnectionMode.Loose}

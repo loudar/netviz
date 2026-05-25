@@ -188,6 +188,8 @@ type Snapshot = {
   workMode: WorkMode;
   renderAllElements: boolean;
   setRenderAllElements: (v: boolean) => void;
+  inspectEdgeId: string | null;
+  setInspectEdge: (id: string | null) => void;
 };
 
 export type WorkMode = "design" | "preview";
@@ -354,6 +356,8 @@ export const useFlowStore = create<FlowState>()(
   showGrid: true,
   showSmartGuides: true,
   workMode: "design" as WorkMode,
+  inspectEdgeId: null,
+  setInspectEdge: (id) => set({ inspectEdgeId: id }),
 
   onNodesChange: (changes) =>
     set((s) => ({ nodes: applyNodeChanges(changes, s.nodes) })),
