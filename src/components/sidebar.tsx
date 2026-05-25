@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Activity,
   Circle,
@@ -192,6 +192,11 @@ export function Sidebar() {
   const deleteCustomBlock = useFlowStore((s) => s.deleteCustomBlock);
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<Tab>("blocks");
+  const inspectEdgeId = useFlowStore((s) => s.inspectEdgeId);
+
+  useEffect(() => {
+    if (inspectEdgeId) setTab("options");
+  }, [inspectEdgeId]);
 
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col border-r border-border bg-card/40">

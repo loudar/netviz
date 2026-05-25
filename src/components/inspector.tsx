@@ -27,12 +27,9 @@ import {
   type BorderStyle,
   type CodeLanguage,
   type CodeNode,
-  type EdgeArrows,
-  type EdgeLineStyle,
   type IconPosition,
   type ImageNode,
   type InfraNode,
-  type LabeledEdge,
   type LineNode,
   type ShapeNode,
   type StepNode,
@@ -80,16 +77,9 @@ export function Inspector() {
   const selectedIds = useFlowStore(
     useShallow((s) => s.nodes.filter((n) => n.selected).map((n) => n.id))
   );
-  const inspectEdgeId = useFlowStore((s) => s.inspectEdgeId);
-  const inspectEdge = useFlowStore(
-    useShallow((s) => {
-      if (!s.inspectEdgeId) return null;
-      const e = s.edges.find((ed) => ed.id === s.inspectEdgeId);
-      return e ?? null;
-    })
-  );
 
-  if (!selectedProjection && !inspectEdge) return null;
+  if (!selectedProjection) return null;
+  const selectedNode = selectedProjection as unknown as AppNode;
 
   return (
     <aside className="flex h-full w-72 shrink-0 flex-col border-l border-border bg-card/40">
@@ -99,11 +89,7 @@ export function Inspector() {
         </p>
       </div>
       <div className="flex-1 space-y-5 overflow-y-auto p-4">
-        {selectedProjection ? (
-          <NodeEditor node={selectedProjection as unknown as AppNode} selectedIds={selectedIds} />
-        ) : (
-          <EdgeEditor edge={inspectEdge} />
-        )}
+        <NodeEditor node={selectedNode} selectedIds={selectedIds} />
       </div>
     </aside>
   );
@@ -1235,244 +1221,6 @@ function LineEditor({ node, selectedIds }: { node: LineNode; selectedIds: string
           updateNodesData(selectedIds, { strokeColor: v ?? "#94a3b8" })
         }
       />
-    </>
-  );
-}
-
-function LineStylePreview({ kind }: { kind: EdgeLineStyle }) {
-  const dash = kind === "dashed" ? "6 4" : kind === "dotted" ? "1 4" : undefined;
-  const cap = kind === "dotted" ? "round" : undefined;
-  return (
-    <svg viewBox="0 0 40 6" className="h-1.5 w-full">
-      <line x1="2" y1="3" x2="38" y2="3" stroke="currentColor" strokeWidth="2" strokeDasharray={dash} strokeLinecap={cap} />
-    </svg>
-  );
-}
-
-function ArrowPreview({ kind }: { kind: EdgeArrows }) {
-  const start = kind === "start" || kind === "both";
-  const end = kind === "end" || kind === "both";
-  if (kind === "none") {
-    return (
-      <svg viewBox="0 0 40 6" className="h-1.5 w-full">
-        <line x1="2" y1="3" x2="38" y2="3" stroke="currentColor" strokeWidth="2" />
-      </svg>
-    );
-  }
-  return (
-    <svg viewBox="0 0 40 6" className="h-1.5 w-full">
-      {start && <polygon points="6,3 10,0 10,6" fill="currentColor" />}
-      <line x1={start ? 8 : 2} y1="3" x2={end ? 32 : 38} y2="3" stroke="currentColor" strokeWidth="2" />
-      {end && <polygon points="34,3 30,0 30,6" fill="currentColor" />}
-    </svg>
-  );
-}
-
-function EdgeEditor({ edge }: { edge: LabeledEdge }) {
-  const globalEdgeColor = useFlowStore((s) => s.edgeColor);
-  const globalLineStyle = useFlowStore((s) => s.edgeLineStyle);
-  const globalDashGap = useFlowStore((s) => s.edgeDashGap);
-  const globalArrows = useFlowStore((s) => s.edgeArrows);
-
-  const setEdgeColor = useFlowStore((s) => s.setEdgeColor);
-  const setEdgeLineStyle = useFlowStore((s) => s.setEdgeLineStyle);
-  const setEdgeDashGap = useFlowStore((s) => s.setEdgeDashGap);
-  const setEdgeArrows = useFlowStore((s) => s.setEdgeArrows);
-  const setEdgeLabelColor = useFlowStore((s) => s.setEdgeLabelColor);
-
-  const edgeColor = edge.data?.color ?? globalEdgeColor;
-  const lineStyle = edge.data?.lineStyle ?? globalLineStyle;
-  const dashGap = edge.data?.dashGap ?? globalDashGap;
-  const arrows = edge.data?.arrows ?? globalArrows;
-  const labelTextColor = edge.data?.labelTextColor;
-  const labelBgColor = edge.data?.labelBgColor;
-  const labelBorderColor = edge.data?.labelBorderColor;
-
-  const isTurbo = edge.data?.turbo ?? useFlowStore.getState().turbo;
-  const animateActive = useFlowStore((s) => s.animateEdges);
-
-  const [labelKey, setLabelKey] = useState<"text" | "bg" | "border">("text");
-  const labelColors = { text: labelTextColor, bg: labelBgColor, border: labelBorderColor };
-  const currentLabelColor = labelColors[labelKey];
-
-  return (
-    <>
-      <div>
-        <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
-          Color{isTurbo ? " (overridden by turbo)" : ""}
-        </Label>
-        <div className={cn("flex flex-wrap gap-1.5 pt-1", isTurbo && "pointer-events-none opacity-40")}>
-          {COLOR_PRESETS.filter((p) => p.hex !== "transparent").map((p) => {
-            const selected = (edgeColor ?? null) === p.hex;
-            const isNone = p.hex === null;
-            return (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => setEdgeColor(p.hex ?? undefined)}
-                title={p.label}
-                aria-label={p.label}
-                className={cn(
-                  "flex h-5 w-5 items-center justify-center rounded-md border border-border transition-colors",
-                  selected && "ring-1 ring-ring"
-                )}
-                style={isNone ? undefined : { backgroundColor: p.hex ?? undefined }}
-              >
-                {isNone ? <X className="h-3 w-3 text-muted-foreground" /> : null}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <div>
-        <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
-          Line style
-        </Label>
-        <div className="flex gap-1 pt-1">
-          {(["solid", "dashed", "dotted"] as EdgeLineStyle[]).map((k) => {
-            const active = lineStyle === k;
-            const disabled = k === "solid" && animateActive;
-            return (
-              <button
-                key={k}
-                type="button"
-                onClick={() => !disabled && setEdgeLineStyle(k)}
-                disabled={disabled}
-                title={disabled ? "Solid unavailable while Animate edges is on" : undefined}
-                className={cn(
-                  "flex-1 rounded-md border border-border px-2 py-1.5 text-[11px] capitalize transition-colors",
-                  disabled && "cursor-not-allowed opacity-40",
-                  !disabled && active
-                    ? "bg-accent text-accent-foreground ring-1 ring-ring"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <LineStylePreview kind={k} />
-                <span className="block pt-0.5">{k}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {(lineStyle === "dashed" || lineStyle === "dotted") && (
-        <div>
-          <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
-            Dash spacing
-          </Label>
-          <div className="flex items-center gap-2 pt-1">
-            <input
-              type="range"
-              min={2}
-              max={20}
-              step={1}
-              value={dashGap}
-              onChange={(e) => setEdgeDashGap(Number(e.target.value))}
-              className="flex-1 accent-primary"
-              aria-label="Edge dash spacing"
-            />
-            <span className="w-6 text-right text-[10px] tabular-nums text-muted-foreground">
-              {dashGap}
-            </span>
-          </div>
-        </div>
-      )}
-
-      <div>
-        <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
-          Arrows
-        </Label>
-        <div className="flex gap-1 pt-1">
-          {(["none", "start", "end", "both"] as EdgeArrows[]).map((k) => {
-            const active = arrows === k;
-            return (
-              <button
-                key={k}
-                type="button"
-                onClick={() => setEdgeArrows(k)}
-                className={cn(
-                  "flex-1 rounded-md border border-border px-2 py-1.5 text-[11px] capitalize transition-colors",
-                  active
-                    ? "bg-accent text-accent-foreground ring-1 ring-ring"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <ArrowPreview kind={k} />
-                <span className="block pt-0.5">{k === "none" ? "None" : k === "start" ? "Start" : k === "end" ? "End" : "Both"}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <div>
-        <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
-          Label color
-        </Label>
-        <div className="flex flex-wrap gap-1 pt-1">
-          {(
-            [
-              { k: "text" as const, label: "Text" },
-              { k: "bg" as const, label: "Background" },
-              { k: "border" as const, label: "Border" },
-            ]
-          ).map((t) => {
-            const sel = labelKey === t.k;
-            const val = labelColors[t.k];
-            return (
-              <button
-                key={t.k}
-                type="button"
-                onClick={() => setLabelKey(t.k)}
-                className={cn(
-                  "flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5 text-[10px] transition-colors",
-                  sel
-                    ? "bg-accent text-accent-foreground ring-1 ring-ring"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <span
-                  className="h-2.5 w-2.5 rounded-sm border border-border"
-                  style={val ? { backgroundColor: val } : undefined}
-                />
-                {t.label}
-              </button>
-            );
-          })}
-        </div>
-        <div className="flex flex-wrap gap-1.5 pt-1">
-          {COLOR_PRESETS.map((p) => {
-            const selected = (currentLabelColor ?? null) === p.hex;
-            const isNone = p.hex === null;
-            const isTransparent = p.hex === "transparent";
-            const style: React.CSSProperties = {};
-            if (isTransparent) {
-              style.backgroundImage =
-                "conic-gradient(hsl(var(--muted-foreground) / 0.5) 25%, transparent 25% 50%, hsl(var(--muted-foreground) / 0.5) 50% 75%, transparent 75%)";
-              style.backgroundSize = "6px 6px";
-            } else if (!isNone) {
-              style.backgroundColor = p.hex ?? undefined;
-            }
-            return (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => setEdgeLabelColor(labelKey, p.hex ?? undefined)}
-                title={p.label}
-                aria-label={p.label}
-                className={cn(
-                  "flex h-5 w-5 items-center justify-center rounded-md border border-border transition-colors",
-                  selected && "ring-1 ring-ring"
-                )}
-                style={style}
-              >
-                {isNone ? <X className="h-3 w-3 text-muted-foreground" /> : null}
-              </button>
-            );
-          })}
-        </div>
-      </div>
     </>
   );
 }

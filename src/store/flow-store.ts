@@ -357,7 +357,12 @@ export const useFlowStore = create<FlowState>()(
   showSmartGuides: true,
   workMode: "design" as WorkMode,
   inspectEdgeId: null,
-  setInspectEdge: (id) => set({ inspectEdgeId: id }),
+  setInspectEdge: (id) =>
+    set((s) => ({
+      inspectEdgeId: id,
+      edges: s.edges.map((e) => ({ ...e, selected: e.id === id })),
+      nodes: s.nodes.map((n) => ({ ...n, selected: false })),
+    })),
 
   onNodesChange: (changes) =>
     set((s) => ({ nodes: applyNodeChanges(changes, s.nodes) })),

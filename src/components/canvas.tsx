@@ -232,9 +232,6 @@ function CanvasInner() {
   const onEdgeClick = useCallback(
     (_: React.MouseEvent, edge: LabeledEdge) => {
       useFlowStore.getState().setInspectEdge(edge.id);
-      useFlowStore.getState().onNodesChange(
-        useFlowStore.getState().nodes.filter((n) => n.selected).map((n) => ({ type: "select", id: n.id, selected: false }))
-      );
     },
     []
   );

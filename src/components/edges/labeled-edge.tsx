@@ -37,15 +37,7 @@ export function LabeledEdge({
   const ref = useRef<HTMLInputElement>(null);
 
   const selectEdge = useCallback(() => {
-    const store = useFlowStore.getState();
-    store.onEdgesChange([
-      ...store.edges.filter((e) => e.selected).map((e) => ({ type: "select" as const, id: e.id, selected: false })),
-      { type: "select", id, selected: true },
-    ]);
-    store.onNodesChange(
-      store.nodes.filter((n) => n.selected).map((n) => ({ type: "select" as const, id: n.id, selected: false }))
-    );
-    store.setInspectEdge(id);
+    useFlowStore.getState().setInspectEdge(id);
   }, [id]);
 
   useEffect(() => {
